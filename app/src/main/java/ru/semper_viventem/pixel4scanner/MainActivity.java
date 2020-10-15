@@ -15,7 +15,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureRequest.Builder;
 import android.media.Image;
 import android.media.ImageReader;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -25,10 +24,10 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -48,6 +47,7 @@ import ru.semper_viventem.pixel4scanner.ultradepth.apps.frame.FrameReader;
 /**
  * This is class based on decompiled sources of uDepth demo.
  * This is a non-commercial project implemented for educational purposes only.
+ *
  * @see "https://ai.googleblog.com/2020/04/udepth-real-time-3d-depth-sensing-on.html"
  */
 public class MainActivity extends AppCompatActivity implements OnTouchEventListener {
@@ -61,12 +61,9 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private static final float[] kCmapRedCoefs = {-0.04055352f, 2.991828f, -25.613377f, 98.59276f, -133.13583f, 57.30011f};
     private static int numBufferedFrames = 1;
     private static int numBufferedImages = 20;
-    /* access modifiers changed from: private */
     public Handler backgroundHandler;
     private HandlerThread backgroundThread;
-    /* access modifiers changed from: private */
     public CameraCaptureSession cameraCaptureSessions;
-    /* access modifiers changed from: private */
     public CameraDevice cameraDevice;
     private TextureView cameraView;
     private ImageReader depthImageReader;
@@ -88,8 +85,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private float principalPointX = 320.0f;
     private float principalPointY = 240.0f;
     private ImageReader rgbImageReader;
+    private boolean isCaptured = false;
     SurfaceTextureListener textureListener = new SurfaceTextureListener() {
-        @RequiresApi(api = Build.VERSION_CODES.P)
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
             MainActivity.this.openCamera();
         }
@@ -123,8 +120,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         }
     }
 
-    /* access modifiers changed from: protected */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
@@ -135,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         setContentView(R.layout.main);
         findViewById(R.id.mainView).setBackgroundColor(getPerceptColoring(0.0f));
         findViewById(R.id.modeButton).setOnClickListener(v -> switchMode());
+        findViewById(R.id.captureButton).setOnClickListener(v -> switchCaptured());
         ImageView imageView = findViewById(R.id.depthMapView);
         this.depthMapView = imageView;
         imageView.setMaxHeight(DefaultRenderConfiguration.IMAGE_WIDTH);
@@ -154,8 +150,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         getWindow().addFlags(128);
     }
 
-    /* access modifiers changed from: protected */
-    @RequiresApi(api = Build.VERSION_CODES.P)
     public void onResume() {
         Log.i(TAG, "onResume");
         super.onResume();
@@ -167,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         this.glView.onResume();
     }
 
-    /* access modifiers changed from: protected */
     public void onPause() {
         Log.i(TAG, "onPause");
         super.onPause();
@@ -228,8 +221,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         }
     }
 
-    /* access modifiers changed from: private */
-    @RequiresApi(api = Build.VERSION_CODES.P)
     public void createCameraPreview() {
         try {
             FrameReader newInstance = FrameReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, numBufferedFrames);
@@ -273,18 +264,22 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         }
     }
 
-    /* access modifiers changed from: 0000 */
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public final /* synthetic */ void onFrameAvailable(FrameReader reader) {
+    private void onFrameAvailable(FrameReader reader) {
         Frame frame = reader.acquireLatestFrame();
+
         if (frame != null) {
-            Bitmap bitmap = processDepthMap(frame);
-            Matrix matrix = new Matrix();
-            matrix.postRotate(270.0f);
-            matrix.postScale(-1.0f, 1.0f, ((float) bitmap.getWidth()) / 2.0f, ((float) bitmap.getHeight()) / 2.0f);
-            Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            bitmap.recycle();
-            runOnUiThread(() -> depthMapView.setImageBitmap(oriented));
+            if (!isCaptured) {
+                Bitmap bitmap = processDepthMap(frame);
+                Matrix matrix = new Matrix();
+                matrix.postRotate(270.0f);
+                matrix.postScale(-1.0f, 1.0f, ((float) bitmap.getWidth()) / 2.0f, ((float) bitmap.getHeight()) / 2.0f);
+
+                Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                bitmap.recycle();
+
+                runOnUiThread(() -> depthMapView.setImageBitmap(oriented));
+            }
+
             Frame[] frameArr = this.frameBuffer;
             int i = this.frameBufferCounter;
             int i2 = i + 1;
@@ -299,8 +294,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         }
     }
 
-    /* access modifiers changed from: 0000 */
-    public final /* synthetic */ void onRgbImageAvilable(ImageReader reader) {
+    private void onRgbImageAvilable(ImageReader reader) {
         synchronized (this.imageCallbackMutex) {
             try {
                 stepThroughRgbFrames();
@@ -312,8 +306,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         }
     }
 
-    /* access modifiers changed from: 0000 */
-    public final /* synthetic */ void onDepthImageAvilable(ImageReader reader) {
+    private void onDepthImageAvilable(ImageReader reader) {
         synchronized (this.imageCallbackMutex) {
             try {
                 stepThroughRgbFrames();
@@ -341,7 +334,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         return Math.max(0.0f, Math.min(1.0f, ((float) rawDepth) / MAX_VISIBLE_DEPTH_MM));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public int getPerceptColoring(float value) {
         float x = Math.max(0.0f, Math.min(1.0f, value));
         float x2 = x * x;
@@ -358,7 +350,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         return Color.argb(1.0f, Floats.constrainToRange(red, 0.0f, 1.0f), Floats.constrainToRange(green, 0.0f, 1.0f), Floats.constrainToRange(blue, 0.0f, 1.0f));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private Bitmap processDepthMap(Frame frame) {
         boolean shouldTextureRgb;
         short[] depth16Data;
@@ -432,7 +423,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             y++;
             i = 0;
         }
-        boolean z2 = shouldTextureRgb2;
         if (numPoints > 0) {
             this.glView.setPoints(Arrays.copyOf(points, numPoints * 7));
         } else {
@@ -442,10 +432,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         return Bitmap.createBitmap(imgArray, width, height, Bitmap.Config.ARGB_8888);
     }
 
-    /* access modifiers changed from: private */
-    /* JADX WARNING: Removed duplicated region for block: B:54:0x01ae A[Catch:{ CameraAccessException -> 0x01bd }] */
-    /* JADX WARNING: Removed duplicated region for block: B:55:0x01b3 A[Catch:{ CameraAccessException -> 0x01bd }] */
-    @RequiresApi(api = Build.VERSION_CODES.P)
     public void openCamera() {
         String str = ", ";
         String str2 = TAG;
@@ -465,7 +451,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 ActivityCompat.requestPermissions(this, new String[]{str3}, REQUEST_CAMERA_PERMISSION);
             } else {
                 CameraDevice.StateCallback r3 = new CameraDevice.StateCallback() {
-                    @RequiresApi(api = Build.VERSION_CODES.P)
                     public void onOpened(@NotNull CameraDevice camera) {
                         MainActivity.this.cameraDevice = camera;
                         MainActivity.this.createCameraPreview();
@@ -588,7 +573,15 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         this.glView.setVisibility(View.VISIBLE);
     }
 
-    /* access modifiers changed from: private */
+    private void switchCaptured() {
+        isCaptured = !isCaptured;
+        if (isCaptured) {
+            ((Button) findViewById(R.id.captureButton)).setText("Uncapture");
+        } else {
+            ((Button) findViewById(R.id.captureButton)).setText("Capture");
+        }
+    }
+
     public static void logError(Exception e) {
         String message = e.getMessage();
         String arrays = Arrays.toString(e.getStackTrace());
