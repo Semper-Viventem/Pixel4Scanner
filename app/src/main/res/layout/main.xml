@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainView"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#ff000000"
+    android:orientation="vertical">
+
+    <ru.semper_viventem.pixel4scanner.libs.renderer.PointCloudRendererView
+        android:id="@+id/pointcloudView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginBottom="100.0dip"
+        android:contentDescription="Point cloud view"
+        android:orientation="vertical" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="100.0dip"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/depthMapView"
+            android:layout_width="480.0dip"
+            android:layout_height="640.0dip"
+            android:layout_gravity="bottom"
+            android:contentDescription="@null"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <TextureView
+            android:id="@+id/cameraView"
+            android:layout_width="111.0dip"
+            android:layout_height="148.0dip"
+            android:contentDescription="Camera view" />
+    </RelativeLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="100.0dip"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:weightSum="2.0">
+
+        <Button
+            android:id="@+id/modeButton"
+            android:layout_width="0.0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="1.0"
+            android:background="#ff22313d"
+            android:contentDescription="Change mode"
+            android:text="Mode"
+            android:textColor="#fffff6e0"
+            android:textSize="20.0sp" />
+
+        <Button
+            android:id="@+id/captureButton"
+            android:layout_width="0.0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="1.0"
+            android:background="#ff22313d"
+            android:contentDescription="Capture"
+            android:text="Capture"
+            android:textColor="#fffff6e0"
+            android:textSize="20.0sp" />
+    </LinearLayout>
+</FrameLayout>
