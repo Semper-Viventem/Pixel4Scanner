@@ -576,9 +576,9 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private void switchCaptured() {
         isCaptured = !isCaptured;
         if (isCaptured) {
-            ((Button) findViewById(R.id.captureButton)).setText("Release");
+            ((Button) findViewById(R.id.captureButton)).setText(R.string.release);
         } else {
-            ((Button) findViewById(R.id.captureButton)).setText("Capture");
+            ((Button) findViewById(R.id.captureButton)).setText(R.string.capture);
         }
     }
 

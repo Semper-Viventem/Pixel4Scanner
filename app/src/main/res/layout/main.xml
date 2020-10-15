@@ -12,7 +12,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top"
         android:layout_marginBottom="100.0dip"
-        android:contentDescription="Point cloud view"
         android:orientation="vertical" />
 
     <RelativeLayout
@@ -40,11 +39,10 @@
         <TextureView
             android:id="@+id/cameraView"
             android:layout_width="111.0dip"
-            android:layout_height="148.0dip"
-            android:contentDescription="Camera view" />
+            android:layout_height="148.0dip" />
     </RelativeLayout>
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="100.0dip"
         android:layout_gravity="bottom"
@@ -57,8 +55,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1.0"
             android:background="#ff22313d"
-            android:contentDescription="Change mode"
-            android:text="Mode"
+            android:text="@string/mode"
             android:textColor="#fffff6e0"
             android:textSize="20.0sp" />
 
@@ -68,8 +65,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1.0"
             android:background="#ff22313d"
-            android:contentDescription="Capture"
-            android:text="Capture"
+            android:text="@string/capture"
             android:textColor="#fffff6e0"
             android:textSize="20.0sp" />
     </LinearLayout>

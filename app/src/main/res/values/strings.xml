@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Pixel4Scanner</string>
+    <string name="release">Release</string>
+    <string name="capture">Capture</string>
+    <string name="mode">Mode</string>
 </resources>
