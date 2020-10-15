@@ -54,12 +54,18 @@ public class PointCloudRendererView extends GLSurfaceView {
 
     public boolean onTouchEvent(final MotionEvent event) {
         queueEvent(() -> {
-            PointCloudRendererView.this.scaleListener.onTouchEvent(event);
-            if (event.getAction() == 2 && !PointCloudRendererView.this.scaleListener.isInProgress()) {
-                PointCloudRendererView.this.renderer.setTouchPoint(event.getRawX(), event.getRawY());
+            scaleListener.onTouchEvent(event);
+            if (event.getAction() == MotionEvent.ACTION_DOWN && !scaleListener.isInProgress()) {
+                renderer.startMotion(event.getRawX(), event.getRawY());
             }
-            if (PointCloudRendererView.this.touchListener != null && !PointCloudRendererView.this.scaleListener.isInProgress()) {
-                OnTouchEventListener onTouchEventListener = PointCloudRendererView.this.touchListener;
+            if (event.getAction() == MotionEvent.ACTION_UP && !scaleListener.isInProgress()) {
+                renderer.stopMotion();
+            }
+            if (event.getAction() == MotionEvent.ACTION_MOVE && !scaleListener.isInProgress()) {
+                renderer.setTouchPoint(event.getRawX(), event.getRawY());
+            }
+            if (touchListener != null && !scaleListener.isInProgress()) {
+                OnTouchEventListener onTouchEventListener = touchListener;
                 MotionEvent motionEvent = event;
                 onTouchEventListener.onTouchEvent(motionEvent, motionEvent.getX(), event.getY());
             }

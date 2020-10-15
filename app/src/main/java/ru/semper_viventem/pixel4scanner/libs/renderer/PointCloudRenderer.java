@@ -24,8 +24,12 @@ public class PointCloudRenderer implements Renderer {
     private boolean useBackBuffer = false;
     private FloatBuffer vertexBuffer;
     private float width = 1.0f;
-    private float xTouch = 0.5f;
-    private float yTouch = 0.5f;
+
+    private boolean inMotion = false;
+    private float lastX = 0.5f;
+    private float lastY = 0.5f;
+    private float xAngle = 0.5f;
+    private float yAngle = 0.5f;
 
     public static class Config {
         public float imageHeight = 480.0f;
@@ -57,8 +61,8 @@ public class PointCloudRenderer implements Renderer {
         float[] points;
         synchronized (this.bufferLock) {
             useBackBufferLocal = this.useBackBuffer;
-            xAngle = this.xTouch;
-            yAngle = this.yTouch;
+            xAngle = this.xAngle;
+            yAngle = this.yAngle;
         }
         if (useBackBufferLocal) {
             points = this.points1;
@@ -90,10 +94,28 @@ public class PointCloudRenderer implements Renderer {
         }
     }
 
+    public void startMotion(float x, float y) {
+        inMotion = true;
+        lastX = x / width;
+        lastY = y / height;
+    }
+
+    public void stopMotion() {
+        inMotion = false;
+        lastX = 0.0f;
+        lastY = 0.0f;
+    }
+
     public void setTouchPoint(float x, float y) {
-        if (!this.rotationLocked) {
-            this.xTouch = x / this.width;
-            this.yTouch = y / this.height;
+        if (!this.rotationLocked && inMotion) {
+            float newX = x / width;
+            float newY = y / height;
+            float dX = lastX - newX;
+            float dY = lastY - newY;
+            xAngle -= dX;
+            yAngle -= dY;
+            lastX = newX;
+            lastY = newY;
         }
     }
 
@@ -107,8 +129,8 @@ public class PointCloudRenderer implements Renderer {
 
     public void resetAndLockOrientation() {
         synchronized (this.bufferLock) {
-            this.xTouch = 0.5f;
-            this.yTouch = 0.5f;
+            this.xAngle = 0.5f;
+            this.yAngle = 0.5f;
             this.renderScale = 1.0f;
             this.rotationLocked = true;
         }
