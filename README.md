@@ -13,7 +13,7 @@ You can export depth map with original RGB map by *share* button.
 
 <img src="/docs/photo_depth.png" width="400"><img src="/docs/photo.png" width="400">
 
-[](/docs/photo_depth_720.gif) [](/docs/photo_720.gif)
+![](/docs/photo_depth_720.gif) ![](/docs/photo_720.gif)
 
 ```
 
