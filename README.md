@@ -7,7 +7,6 @@ This is a **non-commercial** project that I am doing for educational purposes on
 
 You can export depth map with original RGB map by *share* button.
 
-<img src="/docs/images/Screenshot_20180722-000750.png" width="400">  <img src="/docs/sample.png" width="400">
-<img src="/docs/images/Screenshot_20180722-000750.png" width="400">  <img src="/docs/sample_depth.png" width="400">
+<img src="/docs/sample.png" width="400"><img src="/docs/sample_depth.png" width="400">
 
 ![](docs/720.gif)
