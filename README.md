@@ -11,9 +11,9 @@ This is a **non-commercial** project that I am doing for educational purposes on
 
 You can export depth map with original RGB map by *share* button.
 
-<img src="/docs/sample.png" width="400"><img src="/docs/sample_depth.png" width="400">
+<img src="/docs/photo_depth.png" width="400"><img src="/docs/photo.png" width="400">
 
-![](docs/720.gif)
+<img src="/docs/photo_depth_720.gif" width="400"><img src="/docs/photo_720.gif" width="400">
 
 ```
 
