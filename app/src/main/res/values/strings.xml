@@ -3,4 +3,6 @@
     <string name="release">Release</string>
     <string name="capture">Capture</string>
     <string name="mode">Mode</string>
+    <string name="share">Share</string>
+    <string name="share_via">Share depth map via</string>
 </resources>

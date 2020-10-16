@@ -86,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private float principalPointY = 240.0f;
     private ImageReader rgbImageReader;
     private boolean isCaptured = false;
+    private Bitmap actualDepthBitmap = null;
+    private Bitmap actualPhotoBitmap = null;
     SurfaceTextureListener textureListener = new SurfaceTextureListener() {
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
             MainActivity.this.openCamera();
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
 
     private enum VisualizationMode {
         RENDER_POINT_CLOUD_COLOR,
-        RENDER_POINT_CLOUD;
+        RENDER_POINT_CLOUD,
+        RENDER_DEPTH_MAP_WITH;
 
         public VisualizationMode getNext() {
             return values()[(ordinal() + 1) % values().length];
@@ -131,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         findViewById(R.id.mainView).setBackgroundColor(getPerceptColoring(0.0f));
         findViewById(R.id.modeButton).setOnClickListener(v -> switchMode());
         findViewById(R.id.captureButton).setOnClickListener(v -> switchCaptured());
+        findViewById(R.id.shareButton).setOnClickListener(v -> shareDepthMap());
         ImageView imageView = findViewById(R.id.depthMapView);
         this.depthMapView = imageView;
         imageView.setMaxHeight(DefaultRenderConfiguration.IMAGE_WIDTH);
@@ -277,6 +281,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                 bitmap.recycle();
 
+                actualDepthBitmap = oriented.copy(Bitmap.Config.ARGB_8888, false);
                 runOnUiThread(() -> depthMapView.setImageBitmap(oriented));
             }
 
@@ -334,6 +339,12 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         return Math.max(0.0f, Math.min(1.0f, ((float) rawDepth) / MAX_VISIBLE_DEPTH_MM));
     }
 
+    public int getMonochromeColoring(float value) {
+        float x = Math.max(0.0f, Math.min(1.0f, value));
+        float channel = x;
+        return Color.rgb(channel, channel, channel);
+    }
+
     public int getPerceptColoring(float value) {
         float x = Math.max(0.0f, Math.min(1.0f, value));
         float x2 = x * x;
@@ -351,16 +362,16 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     }
 
     private Bitmap processDepthMap(Frame frame) {
-        boolean shouldTextureRgb;
         short[] depth16Data;
         int width = frame.getDepth16Width();
         int height = frame.getDepth16Height();
         short[] depth16Data2 = frame.getDepth16Data();
         int[] imgArray = new int[(width * height)];
+        int[] originalPhotoArray = new int[(width * height)];
         float[] points = new float[(width * height * 7)];
         int numPoints = 0;
         int i = 0;
-        boolean shouldTextureRgb2 = frame.getYuvWidth() == width && frame.getYuvHeight() == height && this.visualizationMode == VisualizationMode.RENDER_POINT_CLOUD_COLOR;
+        boolean isCameraSize = frame.getYuvWidth() == width && frame.getYuvHeight() == height;
         int y = 0;
         while (true) {
             float f = 0.0f;
@@ -376,7 +387,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 float depth = getDepthFromRawData(rawDepth);
                 if (depth > 0.8f) {
                     depth16Data = depth16Data2;
-                    shouldTextureRgb = shouldTextureRgb2;
                 } else {
                     int index = numPoints * 7;
                     int mapXPos = ((y * DefaultRenderConfiguration.IMAGE_WIDTH) + x) * 2;
@@ -387,25 +397,45 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                     depth16Data = depth16Data2;
                     points[index + 1] = -points[index + 1];
                     points[index + 2] = depth;
-                    if (shouldTextureRgb2) {
+                    if (isCameraSize && visualizationMode == VisualizationMode.RENDER_POINT_CLOUD_COLOR) {
                         byte[] yuvData = frame.getYuvData();
-                        float yVal = (float) yuvData[pixel];
-                        shouldTextureRgb = shouldTextureRgb2;
-                        float uVal = (float) yuvData[pixel + (width * height)];
-                        int i2 = mapXPos;
-                        float vVal = (float) yuvData[pixel + (width * height * 2)];
+                        float yVal = yuvData[pixel];
+                        float uVal = yuvData[pixel + (width * height)];
+                        float vVal = yuvData[pixel + (width * height * 2)];
                         float yVal2 = (yVal < 0.0f ? yVal + 256.0f : yVal) - 16.0f;
                         float uVal2 = (uVal < 0.0f ? uVal + 256.0f : uVal) - 128.0f;
                         float vVal2 = (vVal < 0.0f ? vVal + 256.0f : vVal) - 128.0f;
                         float rVal = (yVal2 * 1.164f) + (1.596f * vVal2);
                         float gVal = ((yVal2 * 1.164f) - (0.813f * vVal2)) - (0.391f * uVal2);
                         float bVal = (1.164f * yVal2) + (2.018f * uVal2);
+
                         points[index + 3] = Floats.constrainToRange(rVal / 255.0f, 0.0f, 1.0f);
                         points[index + 4] = Floats.constrainToRange(gVal / 255.0f, 0.0f, 1.0f);
                         points[index + 5] = Floats.constrainToRange(bVal / 255.0f, 0.0f, 1.0f);
+                        originalPhotoArray[pixel] = Color.rgb(points[index + 3], points[index + 4], points[index + 5]);
                         imgArray[pixel] = getPerceptColoring(scaledDepth);
+                    } else if (isCameraSize && visualizationMode == VisualizationMode.RENDER_DEPTH_MAP_WITH) {
+                        byte[] yuvData = frame.getYuvData();
+                        float yVal = yuvData[pixel];
+                        float uVal = yuvData[pixel + (width * height)];
+                        float vVal = yuvData[pixel + (width * height * 2)];
+                        float yVal2 = (yVal < 0.0f ? yVal + 256.0f : yVal) - 16.0f;
+                        float uVal2 = (uVal < 0.0f ? uVal + 256.0f : uVal) - 128.0f;
+                        float vVal2 = (vVal < 0.0f ? vVal + 256.0f : vVal) - 128.0f;
+                        float rVal = (yVal2 * 1.164f) + (1.596f * vVal2);
+                        float gVal = ((yVal2 * 1.164f) - (0.813f * vVal2)) - (0.391f * uVal2);
+                        float bVal = (1.164f * yVal2) + (2.018f * uVal2);
+
+                        float r = Floats.constrainToRange(rVal / 255.0f, 0.0f, 1.0f);
+                        float g = Floats.constrainToRange(gVal / 255.0f, 0.0f, 1.0f);
+                        float b = Floats.constrainToRange(bVal / 255.0f, 0.0f, 1.0f);
+                        originalPhotoArray[pixel] = Color.rgb(r, g, b);
+
+                        imgArray[pixel] = getMonochromeColoring(scaledDepth);
+                        points[index + 3] = ((float) Color.red(imgArray[pixel])) / 255.0f;
+                        points[index + 4] = ((float) Color.green(imgArray[pixel])) / 255.0f;
+                        points[index + 5] = ((float) Color.blue(imgArray[pixel])) / 255.0f;
                     } else {
-                        shouldTextureRgb = shouldTextureRgb2;
                         imgArray[pixel] = getPerceptColoring(scaledDepth);
                         points[index + 3] = ((float) Color.red(imgArray[pixel])) / 255.0f;
                         points[index + 4] = ((float) Color.green(imgArray[pixel])) / 255.0f;
@@ -416,10 +446,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 }
                 x++;
                 depth16Data2 = depth16Data;
-                shouldTextureRgb2 = shouldTextureRgb;
                 f = 0.0f;
             }
-            boolean z = shouldTextureRgb2;
             y++;
             i = 0;
         }
@@ -429,6 +457,11 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             Arrays.fill(points, 0.0f);
             this.glView.setPoints(points);
         }
+        Bitmap photoBitmap = Bitmap.createBitmap(originalPhotoArray, width, height, Bitmap.Config.ARGB_8888);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(270.0f);
+        matrix.postScale(-1.0f, 1.0f, ((float) photoBitmap.getWidth()) / 2.0f, ((float) photoBitmap.getHeight()) / 2.0f);
+        actualPhotoBitmap = Bitmap.createBitmap(photoBitmap, 0, 0, photoBitmap.getWidth(), photoBitmap.getHeight(), matrix, true);
         return Bitmap.createBitmap(imgArray, width, height, Bitmap.Config.ARGB_8888);
     }
 
@@ -577,9 +610,14 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         isCaptured = !isCaptured;
         if (isCaptured) {
             ((Button) findViewById(R.id.captureButton)).setText(R.string.release);
+
         } else {
             ((Button) findViewById(R.id.captureButton)).setText(R.string.capture);
         }
+    }
+
+    private void shareDepthMap() {
+        ShareUtilsKt.shareBitmapAsImage(this, actualDepthBitmap, actualPhotoBitmap);
     }
 
     public static void logError(Exception e) {
