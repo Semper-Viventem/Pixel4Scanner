@@ -14,7 +14,7 @@ After exporting, we will get the texture and depth map.
 
 <img src="/docs/photo_depth.png" width="400"><img src="/docs/photo.png" width="400">
 
-Then we can restore the 3D model from the depth map in any editor. In the example, I used Photoshop. Also, the model can be viewed in !(STL format)[/docs/photo_depth.stl].
+Then we can restore the 3D model from the depth map in any editor. In the example, I used Photoshop. Also, the model can be viewed in [STL format](/docs/photo_depth.stl).
 
 <img src="/docs/photo_depth_720.gif" width="400"><img src="/docs/photo_720.gif" width="400">
 
