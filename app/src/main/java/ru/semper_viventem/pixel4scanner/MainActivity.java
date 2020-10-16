@@ -53,7 +53,7 @@ import ru.semper_viventem.pixel4scanner.ultradepth.apps.frame.FrameReader;
 public class MainActivity extends AppCompatActivity implements OnTouchEventListener {
     private static final float CAMERA_TO_DEPTH_SCALE = 0.195f;
     private static final String DEPTH_CAMERA_ID = "1";
-    private static final float MAX_VISIBLE_DEPTH_MM = 1000.0f;
+    private static final float MAX_VISIBLE_DEPTH_MM = 750.0f;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private static final String TAG = "UltradepthDemoActivity";
     private static final float[] kCmapBlueCoefs = {-0.08097428f, 4.7317576f, 7.2276936f, -60.616283f, 82.75632f, -34.06507f};
@@ -278,11 +278,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 Matrix matrix = new Matrix();
                 matrix.postRotate(270.0f);
                 matrix.postScale(-1.0f, 1.0f, ((float) bitmap.getWidth()) / 2.0f, ((float) bitmap.getHeight()) / 2.0f);
-
                 Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                 bitmap.recycle();
-
-                actualDepthBitmap = oriented.copy(Bitmap.Config.ARGB_8888, false);
                 runOnUiThread(() -> depthMapView.setImageBitmap(oriented));
             }
 
@@ -341,8 +338,15 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     }
 
     public int getMonochromeColoring(float value) {
-        float x = Math.max(0.0f, Math.min(1.0f, value));
-        float channel = x;
+        float x = Math.max(0.0f, Math.min(0.3f, value - 0.3f));
+        float channel = x / 0.3f;
+        return Color.rgb(channel, channel, channel);
+    }
+
+    public int getMonochromeColoringWithRedFactors(float value) {
+        float x = Math.max(0.0f, Math.min(0.3f, value - 0.3f));
+        float channel = x / 0.3f;
+        if (channel <= 0.0f || channel >= 1.0f) return Color.RED;
         return Color.rgb(channel, channel, channel);
     }
 
@@ -368,6 +372,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         int height = frame.getDepth16Height();
         short[] depth16Data2 = frame.getDepth16Data();
         int[] imgArray = new int[(width * height)];
+        int[] depthMapArray = new int[(width * height)];
         int[] originalPhotoArray = new int[(width * height)];
         float[] points = new float[(width * height * 7)];
         int numPoints = 0;
@@ -386,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 short rawDepth = (short) (y16 & 8191);
                 float scaledDepth = 1.0f - Floats.constrainToRange(((float) rawDepth) / MAX_VISIBLE_DEPTH_MM, f, 1.0f);
                 float depth = getDepthFromRawData(rawDepth);
-                if (depth > 0.8f) {
+                if ((depth > 0.6f && depth < 0.3f && visualizationMode == VisualizationMode.RENDER_DEPTH_MAP_WITH) || depth > 0.8f) {
                     depth16Data = depth16Data2;
                 } else {
                     int index = numPoints * 7;
@@ -415,6 +420,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                         points[index + 5] = Floats.constrainToRange(bVal / 255.0f, 0.0f, 1.0f);
                         originalPhotoArray[pixel] = Color.rgb(points[index + 3], points[index + 4], points[index + 5]);
                         imgArray[pixel] = getPerceptColoring(scaledDepth);
+                        depthMapArray[pixel] = getMonochromeColoring(scaledDepth);
                     } else if (isCameraSize && visualizationMode == VisualizationMode.RENDER_DEPTH_MAP_WITH) {
                         byte[] yuvData = frame.getYuvData();
                         float yVal = yuvData[pixel];
@@ -432,12 +438,14 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                         float b = Floats.constrainToRange(bVal / 255.0f, 0.0f, 1.0f);
                         originalPhotoArray[pixel] = Color.rgb(r, g, b);
 
-                        imgArray[pixel] = getMonochromeColoring(scaledDepth);
+                        imgArray[pixel] = getMonochromeColoringWithRedFactors(scaledDepth);
+                        depthMapArray[pixel] = getMonochromeColoring(scaledDepth);
                         points[index + 3] = ((float) Color.red(imgArray[pixel])) / 255.0f;
                         points[index + 4] = ((float) Color.green(imgArray[pixel])) / 255.0f;
                         points[index + 5] = ((float) Color.blue(imgArray[pixel])) / 255.0f;
                     } else {
                         imgArray[pixel] = getPerceptColoring(scaledDepth);
+                        depthMapArray[pixel] = getMonochromeColoring(scaledDepth);
                         points[index + 3] = ((float) Color.red(imgArray[pixel])) / 255.0f;
                         points[index + 4] = ((float) Color.green(imgArray[pixel])) / 255.0f;
                         points[index + 5] = ((float) Color.blue(imgArray[pixel])) / 255.0f;
@@ -458,11 +466,20 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             Arrays.fill(points, 0.0f);
             this.glView.setPoints(points);
         }
+
         Bitmap photoBitmap = Bitmap.createBitmap(originalPhotoArray, width, height, Bitmap.Config.ARGB_8888);
         Matrix matrix = new Matrix();
         matrix.postRotate(270.0f);
         matrix.postScale(-1.0f, 1.0f, ((float) photoBitmap.getWidth()) / 2.0f, ((float) photoBitmap.getHeight()) / 2.0f);
         actualPhotoBitmap = Bitmap.createBitmap(photoBitmap, 0, 0, photoBitmap.getWidth(), photoBitmap.getHeight(), matrix, true);
+
+
+        Bitmap depthBitmap = Bitmap.createBitmap(depthMapArray, width, height, Bitmap.Config.ARGB_8888);
+        matrix.reset();
+        matrix.postRotate(270.0f);
+        matrix.postScale(-1.0f, 1.0f, ((float) depthBitmap.getWidth()) / 2.0f, ((float) depthBitmap.getHeight()) / 2.0f);
+        actualDepthBitmap = Bitmap.createBitmap(depthBitmap, 0, 0, depthBitmap.getWidth(), depthBitmap.getHeight(), matrix, true);
+
         return Bitmap.createBitmap(imgArray, width, height, Bitmap.Config.ARGB_8888);
     }
 

@@ -3,6 +3,7 @@ package ru.semper_viventem.pixel4scanner
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import androidx.core.content.FileProvider
 import java.io.File
@@ -10,7 +11,7 @@ import java.io.File
 private const val DIRECTORY = "sharing_files/"
 
 fun shareBitmapAsImage(activity: Activity, depthMap: Bitmap, photo: Bitmap) {
-    val depthUri = saveAsFile(activity, depthMap)
+    val depthUri = saveAsFile(activity, scaleDepthBitmap(depthMap))
     val photoUri = saveAsFile(activity, photo)
     val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -20,6 +21,20 @@ fun shareBitmapAsImage(activity: Activity, depthMap: Bitmap, photo: Bitmap) {
         type = "*/*"
     }
     activity.startActivity(intent)
+}
+
+private fun scaleDepthBitmap(depthMap: Bitmap): Bitmap {
+    val (min, max) = depthMap.findMinMaxColorsValues()
+    val newMap = depthMap.copy(Bitmap.Config.ARGB_8888, true)
+    for (x in 0 until depthMap.width) {
+        for (y in 0 until depthMap.height) {
+            if (depthMap.getPixel(x, y) == 0) break
+            val channelValue = depthMap.getColor(x, y).blue()
+            val newValue = (channelValue - min) / (max - min)
+            newMap.setPixel(x, y, Color.rgb(newValue, newValue, newValue))
+        }
+    }
+    return newMap
 }
 
 private fun saveAsFile(activity: Activity, bitmap: Bitmap): Uri {
@@ -36,4 +51,18 @@ private fun saveAsFile(activity: Activity, bitmap: Bitmap): Uri {
         activity.applicationContext.packageName + ".provider",
         file
     )
+}
+
+private fun Bitmap.findMinMaxColorsValues(): Pair<Float, Float> {
+    var min = Float.MAX_VALUE
+    var max = 0f
+    for (x in 0 until width) {
+        for (y in 0 until height) {
+            val channelValue = getColor(x, y).blue()
+            if (channelValue > max) max = channelValue
+            if (channelValue < min) min = channelValue
+        }
+    }
+
+    return min to max
 }
