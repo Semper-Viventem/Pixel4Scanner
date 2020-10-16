@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
         findViewById(R.id.modeButton).setOnClickListener(v -> switchMode());
         findViewById(R.id.captureButton).setOnClickListener(v -> switchCaptured());
         findViewById(R.id.shareButton).setOnClickListener(v -> shareDepthMap());
+        findViewById(R.id.licenseButton).setOnClickListener(v -> startActivity(LicenseActivity.Companion.getInstance(this)));
         ImageView imageView = findViewById(R.id.depthMapView);
         this.depthMapView = imageView;
         imageView.setMaxHeight(DefaultRenderConfiguration.IMAGE_WIDTH);
