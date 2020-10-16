@@ -5,7 +5,7 @@ This is a **non-commercial** project that I am doing for educational purposes on
 
 ## App screenshots
 
-<img src="/docs/screen_1.png" width="400"><img src="/docs/screen_2.png" width="400"><img src="/docs/screen_3.png" width="400">
+<img src="/docs/screen_1.png" width="300"><img src="/docs/screen_2.png" width="300"><img src="/docs/screen_3.png" width="300">
 
 ## Sample of result
 
