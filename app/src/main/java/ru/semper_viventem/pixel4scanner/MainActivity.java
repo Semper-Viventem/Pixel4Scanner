@@ -464,10 +464,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             i = 0;
         }
         if (numPoints > 0) {
-            //
             actualpoints = Arrays.copyOf(points, numPoints * 7);
-            actualwidth =  width;
-            actualheight = height;
             this.glView.setPoints(Arrays.copyOf(points, numPoints * 7));
         } else {
             Arrays.fill(points, 0.0f);
