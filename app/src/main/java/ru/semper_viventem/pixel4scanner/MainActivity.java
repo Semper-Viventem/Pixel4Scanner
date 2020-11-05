@@ -89,8 +89,6 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private Bitmap actualDepthBitmap = null;
     private Bitmap actualPhotoBitmap = null;
     private float[] actualpoints;
-    private int actualwidth;
-    private int actualheight;
  
 
     SurfaceTextureListener textureListener = new SurfaceTextureListener() {
@@ -661,7 +659,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
 
         }
         String xyzstr = xyz.toString();
-        ShareUtilsKt.shareBitmapAsImage(this, actualDepthBitmap, actualPhotoBitmap,xyzstr);//String.format("{\"width\":%d,\"height\":%d,\"pointcloud\":%s}",actualwidth,actualheight, Arrays.toString(actualpoints)));
+        ShareUtilsKt.shareBitmapAsImage(this, actualDepthBitmap, actualPhotoBitmap,xyzstr);
     }
 
     public static void logError(Exception e) {
