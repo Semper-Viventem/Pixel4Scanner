@@ -12,7 +12,7 @@ private const val DIRECTORY = "sharing_files/"
 
 fun shareBitmapAsImage(activity: Activity, depthMap: Bitmap, photo: Bitmap, json : String) {
     val cachePath = File(activity.externalCacheDir, DIRECTORY)
-    val jsonUri = saveAsFile2(activity,json);
+    val jsonUri = saveAsFile(activity,json);
     val depthUri = saveAsFile(activity, scaleDepthBitmap(depthMap))
     val photoUri = saveAsFile(activity, photo)
     val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
@@ -55,7 +55,7 @@ private fun saveAsFile(activity: Activity, bitmap: Bitmap): Uri {
     )
 }
 
-private fun saveAsFile2(activity: Activity, text: String): Uri {
+private fun saveAsFile(activity: Activity, text: String): Uri {
     val cachePath = File(activity.externalCacheDir, DIRECTORY)
     cachePath.mkdir()
 
