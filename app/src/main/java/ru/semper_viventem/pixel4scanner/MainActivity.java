@@ -394,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
                 short rawDepth = (short) (y16 & 8191);
                 float scaledDepth = 1.0f - Floats.constrainToRange(((float) rawDepth) / MAX_VISIBLE_DEPTH_MM, f, 1.0f);
                 float depth = getDepthFromRawData(rawDepth);
-                if (depth>=1.0f) { //(depth > 0.6f && depth < 0.3f && visualizationMode == VisualizationMode.RENDER_DEPTH_MAP_WITH) || depth > 0.8f) {
+                if ((depth > 0.6f && depth < 0.3f && visualizationMode == VisualizationMode.RENDER_DEPTH_MAP_WITH) || depth > 0.8f) {
                     depth16Data = depth16Data2;
                 } else {
                     int index = numPoints * 7;
