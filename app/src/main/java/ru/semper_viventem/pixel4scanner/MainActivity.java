@@ -88,6 +88,9 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     private boolean isCaptured = false;
     private Bitmap actualDepthBitmap = null;
     private Bitmap actualPhotoBitmap = null;
+    private float[] actualpoints;
+ 
+
     SurfaceTextureListener textureListener = new SurfaceTextureListener() {
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
             MainActivity.this.openCamera();
@@ -461,6 +464,7 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             i = 0;
         }
         if (numPoints > 0) {
+            actualpoints = Arrays.copyOf(points, numPoints * 7);
             this.glView.setPoints(Arrays.copyOf(points, numPoints * 7));
         } else {
             Arrays.fill(points, 0.0f);
@@ -635,7 +639,24 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
     }
 
     private void shareDepthMap() {
-        ShareUtilsKt.shareBitmapAsImage(this, actualDepthBitmap, actualPhotoBitmap);
+        StringBuilder xyz = new StringBuilder();
+        for (int i = 0; i < actualpoints.length ; i+= 7) {
+            xyz.append(String.valueOf(actualpoints[i+0]));
+            xyz.append(";");
+            xyz.append(String.valueOf(actualpoints[i+1]));
+            xyz.append(";");
+            xyz.append(String.valueOf(actualpoints[i+2]));
+            xyz.append(";");
+            xyz.append(String.valueOf((int)(actualpoints[i+3]*255)));
+            xyz.append(";");
+            xyz.append(String.valueOf((int)(actualpoints[i+4]*255)));
+            xyz.append(";");
+            xyz.append(String.valueOf((int)(actualpoints[i+5]*255)));
+            xyz.append("\n");
+
+        }
+        String xyzstr = xyz.toString();
+        ShareUtilsKt.shareBitmapAsImage(this, actualDepthBitmap, actualPhotoBitmap,xyzstr);
     }
 
     public static void logError(Exception e) {
