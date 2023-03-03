@@ -3,6 +3,7 @@ package ru.semper_viventem.pixel4scanner;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -234,8 +235,8 @@ public class MainActivity extends AppCompatActivity implements OnTouchEventListe
             FrameReader newInstance = FrameReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, numBufferedFrames);
             this.frameReader = newInstance;
             newInstance.setOnFrameAvailableListener(this::onFrameAvailable);
-            this.rgbImageReader = ImageReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, 35, numBufferedImages);
-            this.depthImageReader = ImageReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, 1144402265, numBufferedImages);
+            this.rgbImageReader = ImageReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, ImageFormat.YUV_420_888, numBufferedImages);
+            this.depthImageReader = ImageReader.newInstance(DefaultRenderConfiguration.IMAGE_WIDTH, DefaultRenderConfiguration.IMAGE_HEIGHT, ImageFormat.DEPTH16, numBufferedImages);
             this.rgbImageReader.setOnImageAvailableListener(this::onRgbImageAvilable, this.backgroundHandler);
             this.depthImageReader.setOnImageAvailableListener(this::onDepthImageAvilable, this.backgroundHandler);
             SurfaceTexture cameraTexture = this.cameraView.getSurfaceTexture();
